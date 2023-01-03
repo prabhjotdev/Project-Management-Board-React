@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import useDataFetching from "../../useDataFetching";
 import Lane from "../../components/Lane/Lane";
 import "./Board.css";
 
@@ -9,41 +10,48 @@ const lanes = [
   { id: 4, title: "Done" },
 ];
 
-function Board() {
-  const [loading, setLoading] = useState(false);
-  const [tasks, setTasks] = useState([]);
-  const [error, setError] = useState("");
+const onDragStart = (e, id) =>{
+  e.dataTransfer.setData('id', id);
+}
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const tasks = await fetch(
-          `https://my-json-server.typicode.com/Packtpublishing/React-Projects-Second-Edition/tasks`,
-        );
-        const result = await tasks.json();
-        console.log(`Results: ${result}`)
-        if (result) {
-          console.log("Result successful");
-          setTasks(result);
-          setLoading(false);
-        }
-      } catch (e) {
-        setLoading(false);
-        setError(e.message);
+const onDragOver = (e) =>{
+  e.preventDefault();
+}
+
+function Board() {
+  const [loading, error, data] = useDataFetching(`https://my-json-server.typicode.com/Packtpublishing/React-Projects-Second-Edition/tasks`);
+  const [tasks, setTasks] = useState([]);
+
+  useEffect(() =>{
+    setTasks(data);
+  }, [data]);
+
+  const onDrop = (e, laneId) =>{
+    const id = e.dataTransfer.getData('id');
+
+    const updateTasks = tasks.filter((task)=>{
+      if(task.id.toString() === id){
+        task.lane = laneId;
       }
-    }
-    fetchData();
-  }, []);
+      return task;
+    });
+
+    setTasks(updateTasks);
+  }
 
   return (
     <div className="Board-wrapper">
       {lanes.map((lane) => (
         <Lane
           key={lane.id}
+          laneId = {lane.id}
           title={lane.title}
           loading={loading}
           error={error}
           tasks={tasks.filter((task) => task.lane === lane.id)}
+          onDragStart={onDragStart}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
         />
       ))}
     </div>

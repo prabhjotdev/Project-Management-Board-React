@@ -22,7 +22,7 @@ const useDataFetching = (dataSource) => {
     fetchData();
   }, [dataSource]);
 
-  return [loading, data, error];
+  return [loading, error, data];
 };
 
 export default useDataFetching;
